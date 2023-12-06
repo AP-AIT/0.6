@@ -1,11 +1,11 @@
 streamlit
-imapclient>=2.1.0
-beautifulsoup4>=4.10.0
-pandas>=1.3.3
-openpyxl>=3.0.13
-python-docx>=0.8.11
-PyPDF2>=1.26.0
-Pillow>=8.3.2
-pytesseract>=0.3.8
+imapclient
+beautifulsoup4
+pandas
+openpyxl
+python-docx
+PyPDF2
+Pillow
+pytesseract
 
 
