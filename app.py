@@ -24,7 +24,7 @@ search_email = st.text_input("Enter the email address to search for")
 # Function to extract information from HTML content
 def extract_info_from_html(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
-    
+
     info = {
         "Name": None,
         "Email": None,
@@ -34,26 +34,27 @@ def extract_info_from_html(html_content):
     }
 
     name_element = soup.find(string=re.compile(r'Name', re.IGNORECASE))
-    if name_element:
+    if name_element and name_element.find_next('td'):
         info["Name"] = name_element.find_next('td').get_text().strip()
 
     email_element = soup.find(string=re.compile(r'Email', re.IGNORECASE))
-    if email_element:
+    if email_element and email_element.find_next('td'):
         info["Email"] = email_element.find_next('td').get_text().strip()
 
     workshop_element = soup.find(string=re.compile(r'Workshop Detail', re.IGNORECASE))
-    if workshop_element:
+    if workshop_element and workshop_element.find_next('td'):
         info["Workshop Detail"] = workshop_element.find_next('td').get_text().strip()
 
     date_element = soup.find(string=re.compile(r'Date', re.IGNORECASE))
-    if date_element:
+    if date_element and date_element.find_next('td'):
         info["Date"] = date_element.find_next('td').get_text().strip()
 
     mobile_element = soup.find(string=re.compile(r'Mobile No\.', re.IGNORECASE))
-    if mobile_element:
+    if mobile_element and mobile_element.find_next('td'):
         info["Mobile No."] = mobile_element.find_next('td').get_text().strip()
 
     return info
+
 
 # Function to recognize file type and perform specific actions
 def process_attachment(attachment):
