@@ -1,4 +1,5 @@
-streamlit
+streamlit>=0.90.0
+
 imapclient
 beautifulsoup4
 pandas
