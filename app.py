@@ -51,29 +51,33 @@ def extract_text(data_type, content):
 
 # Function to fetch email content
 def fetch_email_content(username, password, search_email):
-    # Connect to the local IMAP server (replace 'mail.example.com' and '993' with your server details)
-    mail = imaplib.IMAP4_SSL('localhost', 993)
+    try:
+        # Connect to the local IMAP server (replace 'localhost' and '993' with your server details)
+        mail = imaplib.IMAP4_SSL('localhost', 993)
+        
+        # Login to the email account
+        mail.login(username, password)
 
-    # Login to the email account
-    mail.login(username, password)
+        # Select the mailbox (e.g., 'inbox')
+        mail.select('inbox')
 
-    # Select the mailbox (e.g., 'inbox')
-    mail.select('inbox')
+        # Search for emails from the specified email address
+        status, messages = mail.search(None, f'(FROM "{search_email}")')
 
-    # Search for emails from the specified email address
-    status, messages = mail.search(None, f'(FROM "{search_email}")')
+        # Get the latest email ID
+        latest_email_id = messages[0].split()[-1]
 
-    # Get the latest email ID
-    latest_email_id = messages[0].split()[-1]
+        # Fetch the content of the latest email
+        status, msg_data = mail.fetch(latest_email_id, '(RFC822)')
 
-    # Fetch the content of the latest email
-    status, msg_data = mail.fetch(latest_email_id, '(RFC822)')
+        # Close the connection
+        mail.logout()
 
-    # Close the connection
-    mail.logout()
+        # Return the email content
+        return msg_data[0][1]
 
-    # Return the email content
-    return msg_data[0][1]
+    except Exception as e:
+        raise Exception(f"Error connecting to the IMAP server: {e}")
 
 # Fetch email content based on user input
 if st.button("Fetch Email"):
