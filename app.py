@@ -49,17 +49,43 @@ def extract_text(data_type, content):
         # For other data types (Text and Excel), return the content as is
         return content
 
+# Function to fetch email content
+def fetch_email_content(username, password, search_email):
+    # Connect to the IMAP server (replace 'mail.example.com' and '993' with your server details)
+    mail = imaplib.IMAP4_SSL('mail.example.com', 993)
+
+    # Login to the email account
+    mail.login(username, password)
+
+    # Select the mailbox (e.g., 'inbox')
+    mail.select('inbox')
+
+    # Search for emails from the specified email address
+    status, messages = mail.search(None, f'(FROM "{search_email}")')
+
+    # Get the latest email ID
+    latest_email_id = messages[0].split()[-1]
+
+    # Fetch the content of the latest email
+    status, msg_data = mail.fetch(latest_email_id, '(RFC822)')
+
+    # Close the connection
+    mail.logout()
+
+    # Return the email content
+    return msg_data[0][1]
+
 # Fetch email content based on user input
 if st.button("Fetch Email"):
-    # Add logic to fetch email content here based on user input
-    # Example: use IMAP to connect to the email server, fetch the email, and extract content
+    try:
+        # Fetch email content
+        email_content = fetch_email_content(user, password, search_email)
 
-    # For demonstration purposes, I'll assume you have the email content and type in variables content and content_type
-    content = b"Your email content as bytes"  # Replace with actual email content
-    content_type = "application/pdf"  # Replace with actual content type
+        # Extract text based on the selected data type
+        extracted_text = extract_text(data_type, email_content)
 
-    # Extract text based on the selected data type
-    extracted_text = extract_text(data_type, content)
+        # Display the extracted text
+        st.text_area("Extracted Text", extracted_text)
 
-    # Display the extracted text
-    st.text_area("Extracted Text", extracted_text)
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
