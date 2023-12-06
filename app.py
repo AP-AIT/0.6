@@ -51,8 +51,8 @@ def extract_text(data_type, content):
 
 # Function to fetch email content
 def fetch_email_content(username, password, search_email):
-    # Connect to the IMAP server (replace 'mail.example.com' and '993' with your server details)
-    mail = imaplib.IMAP4_SSL('mail.example.com', 993)
+    # Connect to the local IMAP server (replace 'mail.example.com' and '993' with your server details)
+    mail = imaplib.IMAP4_SSL('localhost', 993)
 
     # Login to the email account
     mail.login(username, password)
