@@ -21,136 +21,45 @@ password = st.text_input("Enter your email password", type="password")
 # Create input field for the email address to search for
 search_email = st.text_input("Enter the email address to search for")
 
-# Function to extract information from HTML content
-def extract_info_from_html(html_content):
-    soup = BeautifulSoup(html_content, 'html.parser')
+# Dropdown to select the type of data
+data_type = st.selectbox("Select the type of data", ["Text", "Image", "Excel", "PDF", "Word"])
 
-    info = {
-        "Name": None,
-        "Email": None,
-        "Workshop Detail": None,
-        "Date": None,
-        "Mobile No.": None
-    }
-
-    name_element = soup.find(string=re.compile(r'Name', re.IGNORECASE))
-    if name_element and name_element.find_next('td'):
-        info["Name"] = name_element.find_next('td').get_text().strip()
-
-    email_element = soup.find(string=re.compile(r'Email', re.IGNORECASE))
-    if email_element and email_element.find_next('td'):
-        info["Email"] = email_element.find_next('td').get_text().strip()
-
-    workshop_element = soup.find(string=re.compile(r'Workshop Detail', re.IGNORECASE))
-    if workshop_element and workshop_element.find_next('td'):
-        info["Workshop Detail"] = workshop_element.find_next('td').get_text().strip()
-
-    date_element = soup.find(string=re.compile(r'Date', re.IGNORECASE))
-    if date_element and date_element.find_next('td'):
-        info["Date"] = date_element.find_next('td').get_text().strip()
-
-    mobile_element = soup.find(string=re.compile(r'Mobile No\.', re.IGNORECASE))
-    if mobile_element and mobile_element.find_next('td'):
-        info["Mobile No."] = mobile_element.find_next('td').get_text().strip()
-
-    return info
-
-
-# Function to recognize file type and perform specific actions
-def process_attachment(attachment):
-    file_type = attachment.get_content_type()
-    file_data = attachment.get_payload(decode=True)
-
-    if file_type == 'application/msword':
-        # If it's a Word document, summarize the content
-        doc = Document(io.BytesIO(file_data))
-        content_summary = ""
-        for paragraph in doc.paragraphs:
-            content_summary += paragraph.text + "\n"
-        return content_summary
-
-    elif file_type == 'application/pdf':
-        # If it's a PDF document, extract text
-        pdf_reader = PyPDF2.PdfFileReader(io.BytesIO(file_data))
-        text = ""
-        for page_num in range(pdf_reader.numPages):
-            text += pdf_reader.getPage(page_num).extractText()
-        return text
-
-    elif file_type.startswith('image/'):
-        # If it's an image, extract text using OCR
-        image = Image.open(io.BytesIO(file_data))
+# Function to extract text from different data types
+def extract_text(data_type, content):
+    if data_type == "Image":
+        # Extract text from image using pytesseract
+        image = Image.open(io.BytesIO(content))
         text = pytesseract.image_to_string(image)
         return text
-
+    elif data_type == "PDF":
+        # Extract text from PDF
+        pdf_reader = PyPDF2.PdfReader(io.BytesIO(content))
+        text = ""
+        for page_num in range(len(pdf_reader.pages)):
+            text += pdf_reader.pages[page_num].extract_text()
+        return text
+    elif data_type == "Word":
+        # Extract text from Word document
+        doc = Document(io.BytesIO(content))
+        text = ""
+        for paragraph in doc.paragraphs:
+            text += paragraph.text + "\n"
+        return text
     else:
-        return None  # For unsupported file types
+        # For other data types (Text and Excel), return the content as is
+        return content
 
-if st.button("Fetch and Generate Excel"):
-    try:
-        # URL for IMAP connection
-        imap_url = 'imap.gmail.com'
+# Fetch email content based on user input
+if st.button("Fetch Email"):
+    # Add logic to fetch email content here based on user input
+    # Example: use IMAP to connect to the email server, fetch the email, and extract content
 
-        # Connection with GMAIL using SSL
-        my_mail = imaplib.IMAP4_SSL(imap_url)
+    # For demonstration purposes, I'll assume you have the email content and type in variables content and content_type
+    content = b"Your email content as bytes"  # Replace with actual email content
+    content_type = "application/pdf"  # Replace with actual content type
 
-        # Log in using user and password
-        my_mail.login(user, password)
+    # Extract text based on the selected data type
+    extracted_text = extract_text(data_type, content)
 
-        # Select the Inbox to fetch messages
-        my_mail.select('inbox')
-
-        # Define the key and value for email search
-        key = 'FROM'
-        value = search_email  # Use the user-inputted email address to search
-        _, data = my_mail.search(None, key, value)
-
-        mail_id_list = data[0].split()
-
-        info_list = []
-
-        # Iterate through messages and extract information from HTML content
-        for num in mail_id_list:
-            typ, data = my_mail.fetch(num, '(RFC822)')
-            msg = email.message_from_bytes(data[0][1])
-
-            for part in msg.walk():
-                if part.get_content_type() == 'text/html':
-                    html_content = part.get_payload(decode=True).decode('utf-8')
-                    info = extract_info_from_html(html_content)
-
-                    # Extract and add the received date
-                    date = msg["Date"]
-                    info["Received Date"] = date
-
-                    info_list.append(info)
-
-                elif part.get('Content-Disposition') is not None:
-                    # Process attachments
-                    attachment = part
-                    attachment_data = process_attachment(attachment)
-
-                    if attachment_data:
-                        st.write(f"Attachment content:\n{attachment_data}")
-
-        # Create a DataFrame from the info_list
-        df = pd.DataFrame(info_list)
-
-        # Generate the Excel file
-        st.write("Data extracted from emails:")
-        st.write(df)
-
-        if st.button("Download Excel File"):
-            excel_file = df.to_excel('EXPO_leads.xlsx', index=False, engine='openpyxl')
-            if excel_file:
-                with open('EXPO_leads.xlsx', 'rb') as file:
-                    st.download_button(
-                        label="Click to download Excel file",
-                        data=file,
-                        key='download-excel'
-                    )
-
-        st.success("Excel file has been generated and is ready for download.")
-
-    except Exception as e:
-        st.error(f"Error: {e}")
+    # Display the extracted text
+    st.text_area("Extracted Text", extracted_text)
